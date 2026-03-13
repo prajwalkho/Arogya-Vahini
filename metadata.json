@@ -1,0 +1,7 @@
+{
+  "name": "Arogya-Vahini",
+  "description": "The Universal Rural Referral & Health Vault: A secure digital healthcare referral system improving patient care between rural PHCs and specialist hospitals using QR-based health tokens and offline synchronization.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
