@@ -70,3 +70,5 @@ export const api = {
     return res.json();
   }
 };
+
+// Attach auth headers to protected endpoints above

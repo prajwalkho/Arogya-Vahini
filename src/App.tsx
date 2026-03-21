@@ -190,6 +190,7 @@ const Dashboard = () => {
 const ReferralList = () => {
   const [referrals, setReferrals] = useState<Referral[]>([]);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
 
   useEffect(() => {
     api.getReferrals().then(setReferrals).finally(() => setLoading(false));
@@ -204,13 +205,34 @@ const ReferralList = () => {
         </div>
       </div>
 
+      <div className="mb-6">
+        <input
+          type="search"
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          placeholder="Search referrals by patient, hospital, status, or token"
+          className="w-full md:w-1/2 px-4 py-2 rounded-xl border border-gray-200 focus:ring-2 focus:ring-emerald-500 outline-none"
+        />
+      </div>
+
       {loading ? (
         <div className="flex justify-center py-12">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600"></div>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {referrals.map(referral => (
+          {referrals
+            .filter(r => {
+              if (!search) return true;
+              const s = search.toLowerCase();
+              return (
+                (r.patient_name || '').toLowerCase().includes(s) ||
+                (r.to_hospital || '').toLowerCase().includes(s) ||
+                (r.status || '').toLowerCase().includes(s) ||
+                (r.token || '').toLowerCase().includes(s)
+              );
+            })
+            .map(referral => (
             <Link 
               key={referral.id} 
               to={`/referrals/${referral.token}`}
@@ -249,6 +271,7 @@ const ReferralList = () => {
 const PatientList = () => {
   const [patients, setPatients] = useState<Patient[]>([]);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
 
   useEffect(() => {
     api.getPatients().then(setPatients).finally(() => setLoading(false));
@@ -264,13 +287,35 @@ const PatientList = () => {
         </Link>
       </div>
 
+      <div className="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div className="w-full md:w-1/2">
+          <input
+            type="search"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Search patients by name, contact or id"
+            className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:ring-2 focus:ring-emerald-500 outline-none"
+          />
+        </div>
+      </div>
+
       {loading ? (
         <div className="flex justify-center py-12">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600"></div>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {patients.map(patient => (
+          {patients
+            .filter(p => {
+              if (!search) return true;
+              const s = search.toLowerCase();
+              return (
+                (p.name || '').toLowerCase().includes(s) ||
+                (p.contact || '').toLowerCase().includes(s) ||
+                (p.id || '').toLowerCase().includes(s)
+              );
+            })
+            .map(patient => (
             <Link key={patient.id} to={`/patients/${patient.id}`} className="bg-white p-6 rounded-2xl shadow-sm border border-emerald-100 hover:shadow-md transition-shadow group">
               <div className="flex items-start justify-between mb-4">
                 <div className="bg-emerald-50 p-3 rounded-xl group-hover:bg-emerald-100 transition-colors">

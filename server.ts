@@ -48,11 +48,12 @@ db.exec(`
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (referral_id) REFERENCES referrals(id)
   );
+
 `);
 
 async function startServer() {
   const app = express();
-  const PORT = 3000;
+  const PORT = process.env.PORT ? parseInt(process.env.PORT as string, 10) : 3000;
 
   app.use(express.json());
 
@@ -139,6 +140,9 @@ async function startServer() {
       .run(id, name, age, gender, contact, address);
     res.json({ id, name, age, gender, contact, address });
   });
+
+  // No auth routes
+
 
   app.get("/api/patients/:id/records", (req, res) => {
     const records = db.prepare("SELECT * FROM health_records WHERE patient_id = ? ORDER BY created_at DESC").all(req.params.id);
