@@ -183,7 +183,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - Inspired by the need for better healthcare coordination in remote areas
 - Thanks to the open-source community for the amazing tools and libraries
 
-### Author
+### Developer
 - **Name:** Prajwal Khot
 - **Email:** [prajwalkhot39@gmail.com]
 - **GitHub:** [@prajwalkho](https://github.com/prajwalkho)
