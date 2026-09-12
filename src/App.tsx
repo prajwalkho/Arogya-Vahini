@@ -278,7 +278,7 @@ const ReferralList = () => {
   const [search, setSearch] = useState('');
 
   useEffect(() => {
-    api.getReferrals().then(setReferrals).finally(() => setLoading(false));
+    api.getReferrals().then(setReferrals).catch(() => setReferrals([])).finally(() => setLoading(false));
   }, []);
 
   return (
@@ -359,7 +359,7 @@ const PatientList = () => {
   const [search, setSearch] = useState('');
 
   useEffect(() => {
-    api.getPatients().then(setPatients).finally(() => setLoading(false));
+    api.getPatients().then(setPatients).catch(() => setPatients([])).finally(() => setLoading(false));
   }, []);
 
   return (

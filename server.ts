@@ -5,10 +5,10 @@ import { v4 as uuidv4 } from "uuid";
 import { connectMongo, withoutMongoId } from "./mongo";
 import { seedDatabase } from "./seed";
 
-async function startServer(): Promise<void> {
+export async function createApp(includeFrontend = process.env.VERCEL !== "1"): Promise<{ app: express.Express; client: Awaited<ReturnType<typeof connectMongo>>["client"] }> {
   const { client, collections } = await connectMongo();
   const app = express();
-  const port = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
+  const publicDemoMode = process.env.PUBLIC_DEMO_MODE === "true" || process.env.VERCEL === "1";
 
   app.use(express.json());
 
@@ -18,11 +18,19 @@ async function startServer(): Promise<void> {
   }
 
   app.get("/api/patients", async (_req, res) => {
+    if (publicDemoMode) {
+      res.status(403).json({ error: "Patient directory is private." });
+      return;
+    }
     const patients = await collections.patients.find().sort({ created_at: -1 }).toArray();
     res.json(patients.map(withoutMongoId));
   });
 
   app.get("/api/referrals", async (_req, res) => {
+    if (publicDemoMode) {
+      res.status(403).json({ error: "Referral directory is private." });
+      return;
+    }
     const referrals = await collections.referrals.find().sort({ created_at: -1 }).toArray();
     const referralsWithPatients = await Promise.all(referrals.map(async (referral) => {
       const patient = await collections.patients.findOne({ id: referral.patient_id });
@@ -48,10 +56,21 @@ async function startServer(): Promise<void> {
       ...recentPatients.map((patient) => ({ type: "patient" as const, created_at: patient.created_at, patient_name: patient.name, detail: "Registered" })),
     ].sort((first, second) => second.created_at.getTime() - first.created_at.getTime()).slice(0, 5);
 
-    res.json({ totalPatients, activeReferrals, completedReferrals, recentActivity });
+    res.json({
+      totalPatients,
+      activeReferrals,
+      completedReferrals,
+      recentActivity: publicDemoMode
+        ? recentActivity.map(({ type, created_at, detail }) => ({ type, created_at, patient_name: "Private patient", detail }))
+        : recentActivity,
+    });
   });
 
   app.post("/api/patients", async (req, res) => {
+    if (publicDemoMode) {
+      res.status(403).json({ error: "Patient registration requires private access." });
+      return;
+    }
     const { name, age, gender, contact, address } = req.body;
     const patient = { id: uuidv4(), name, age, gender, contact, address, created_at: new Date() };
     await collections.patients.insertOne(patient);
@@ -59,11 +78,19 @@ async function startServer(): Promise<void> {
   });
 
   app.get("/api/patients/:id/records", async (req, res) => {
+    if (publicDemoMode) {
+      res.status(403).json({ error: "Health records are private." });
+      return;
+    }
     const records = await collections.healthRecords.find({ patient_id: req.params.id }).sort({ created_at: -1 }).toArray();
     res.json(records.map(withoutMongoId));
   });
 
   app.post("/api/records", async (req, res) => {
+    if (publicDemoMode) {
+      res.status(403).json({ error: "Health records require private access." });
+      return;
+    }
     const { patient_id, doctor_id, diagnosis, prescription, reports } = req.body;
     const record = { id: uuidv4(), patient_id, doctor_id, diagnosis, prescription, reports: JSON.stringify(reports ?? null), created_at: new Date() };
     await collections.healthRecords.insertOne(record);
@@ -71,6 +98,10 @@ async function startServer(): Promise<void> {
   });
 
   app.post("/api/referrals", async (req, res) => {
+    if (publicDemoMode) {
+      res.status(403).json({ error: "Referrals require private access." });
+      return;
+    }
     const { patient_id, from_hospital, to_hospital, reason } = req.body;
     const referral = { id: uuidv4(), patient_id, from_hospital, to_hospital, reason, status: "pending" as const, token: uuidv4(), created_at: new Date() };
     await collections.referrals.insertOne(referral);
@@ -79,6 +110,10 @@ async function startServer(): Promise<void> {
   });
 
   app.get("/api/referrals/:token", async (req, res) => {
+    if (publicDemoMode) {
+      res.status(403).json({ error: "Referral details are private." });
+      return;
+    }
     const referral = await collections.referrals.findOne({ token: req.params.token });
     if (!referral) {
       res.status(404).json({ error: "Referral not found" });
@@ -98,6 +133,10 @@ async function startServer(): Promise<void> {
   });
 
   app.patch("/api/referrals/:token/status", async (req, res) => {
+    if (publicDemoMode) {
+      res.status(403).json({ error: "Referral updates require private access." });
+      return;
+    }
     const { status } = req.body;
     const referral = await collections.referrals.findOne({ token: req.params.token });
     if (referral) {
@@ -107,31 +146,36 @@ async function startServer(): Promise<void> {
     res.json({ success: true });
   });
 
-  if (process.env.NODE_ENV !== "production") {
+  if (includeFrontend && process.env.NODE_ENV !== "production") {
     try {
       const vite = await createViteServer({ server: { middlewareMode: true }, appType: "spa" });
       app.use(vite.middlewares);
     } catch (error) {
       console.error("Vite dev server start error:", error);
     }
-  } else {
+  } else if (includeFrontend) {
     const distPath = path.join(process.cwd(), "dist");
     app.use(express.static(distPath));
     app.get("*", (_req, res) => res.sendFile(path.join(distPath, "index.html")));
   }
 
-  const server = app.listen(port, "0.0.0.0", () => {
-    console.log(`Server running on http://localhost:${port}`);
-  });
-  server.on("error", (error: NodeJS.ErrnoException) => {
-    console.error(error.code === "EADDRINUSE" ? `Port ${port} is already in use.` : "Server error:", error);
-    process.exit(1);
-  });
-  process.once("SIGINT", () => void client.close());
-  process.once("SIGTERM", () => void client.close());
+  return { app, client };
 }
 
-startServer().catch((error) => {
-  console.error("Failed to start server:", error);
-  process.exit(1);
-});
+if (process.env.VERCEL !== "1") {
+  createApp().then(({ app, client }) => {
+    const port = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
+    const server = app.listen(port, "0.0.0.0", () => {
+      console.log(`Server running on http://localhost:${port}`);
+    });
+    server.on("error", (error: NodeJS.ErrnoException) => {
+      console.error(error.code === "EADDRINUSE" ? `Port ${port} is already in use.` : "Server error:", error);
+      process.exit(1);
+    });
+    process.once("SIGINT", () => void client.close());
+    process.once("SIGTERM", () => void client.close());
+  }).catch((error) => {
+    console.error("Failed to start server:", error);
+    process.exit(1);
+  });
+}
