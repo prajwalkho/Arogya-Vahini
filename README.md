@@ -59,6 +59,8 @@ npm install
 ### 3. Environment Configuration
 Create a `.env.local` file in the root directory:
 
+Use `.env.example` as the template. Replace the MongoDB placeholder with the exact Driver connection string from MongoDB Atlas. Do not commit `.env.local`.
+
 ```env
 GEMINI_API_KEY=your_google_gemini_api_key_here
 APP_URL=http://localhost:3000

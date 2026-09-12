@@ -50,7 +50,9 @@ export interface MongoCollections {
 export async function connectMongo(): Promise<{ client: MongoClient; database: Db; collections: MongoCollections }> {
   const mongoUrl = process.env.MONGO_URL;
   if (!mongoUrl) {
-    throw new Error("MONGO_URL is required. Add it to .env.local before starting the server.");
+    throw new Error(
+      "MONGO_URL is required. Add your MongoDB Atlas connection string to .env.local (local) or Vercel project environment variables (deployment)."
+    );
   }
 
   const client = new MongoClient(mongoUrl);
