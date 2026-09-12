@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter, Routes, Route, Link, useNavigate, useParams } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { 
   Activity, 
   Users, 
@@ -27,7 +27,10 @@ import {
   House,
   BarChart3,
   Target,
-  Lightbulb
+  Lightbulb,
+  Paperclip,
+  Building2,
+  MapPin
 } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import { Html5QrcodeScanner } from 'html5-qrcode';
@@ -113,7 +116,7 @@ const Dashboard = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-        <div className="bg-white p-6 rounded-3xl shadow-sm border border-emerald-100">
+        <Link to="/patients" className="block bg-white p-6 rounded-3xl shadow-sm border border-emerald-100 hover:-translate-y-1 hover:shadow-md transition-all">
           <div className="flex items-center justify-between mb-4">
             <div className="bg-emerald-100 p-3 rounded-2xl">
               <Users className="h-6 w-6 text-emerald-600" />
@@ -125,8 +128,8 @@ const Dashboard = () => {
           </div>
           <p className="text-sm text-gray-500 font-medium">Total Patients</p>
           <h3 className="text-3xl font-bold text-gray-900">{stats?.totalPatients || 0}</h3>
-        </div>
-        <div className="bg-white p-6 rounded-3xl shadow-sm border border-blue-100">
+        </Link>
+        <Link to="/referrals?status=pending" className="block bg-white p-6 rounded-3xl shadow-sm border border-blue-100 hover:-translate-y-1 hover:shadow-md transition-all">
           <div className="flex items-center justify-between mb-4">
             <div className="bg-blue-100 p-3 rounded-2xl">
               <Hospital className="h-6 w-6 text-blue-600" />
@@ -135,8 +138,8 @@ const Dashboard = () => {
           </div>
           <p className="text-sm text-gray-500 font-medium">Pending Referrals</p>
           <h3 className="text-3xl font-bold text-gray-900">{stats?.activeReferrals || 0}</h3>
-        </div>
-        <div className="bg-white p-6 rounded-3xl shadow-sm border border-purple-100">
+        </Link>
+        <Link to="/referrals?status=completed" className="block bg-white p-6 rounded-3xl shadow-sm border border-purple-100 hover:-translate-y-1 hover:shadow-md transition-all">
           <div className="flex items-center justify-between mb-4">
             <div className="bg-purple-100 p-3 rounded-2xl">
               <ShieldCheck className="h-6 w-6 text-purple-600" />
@@ -145,7 +148,7 @@ const Dashboard = () => {
           </div>
           <p className="text-sm text-gray-500 font-medium">Completed Referrals</p>
           <h3 className="text-3xl font-bold text-gray-900">{stats?.completedReferrals || 0}</h3>
-        </div>
+        </Link>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -276,6 +279,8 @@ const ReferralList = () => {
   const [referrals, setReferrals] = useState<Referral[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const statusFilter = searchParams.get('status');
 
   useEffect(() => {
     api.getReferrals().then(setReferrals).catch(() => setReferrals([])).finally(() => setLoading(false));
@@ -291,6 +296,25 @@ const ReferralList = () => {
       </div>
 
       <div className="mb-6">
+        <div className="flex flex-wrap gap-2 mb-3">
+          {(['all', 'pending', 'completed'] as const).map(status => (
+            <button
+              key={status}
+              type="button"
+              onClick={() => {
+                if (status === 'all') setSearchParams({});
+                else setSearchParams({ status });
+              }}
+              className={`px-3 py-1.5 rounded-full text-xs font-bold capitalize transition-colors ${
+                (status === 'all' && !statusFilter) || statusFilter === status
+                  ? 'bg-emerald-600 text-white'
+                  : 'bg-white text-gray-500 border border-gray-200 hover:border-emerald-300 hover:text-emerald-600'
+              }`}
+            >
+              {status}
+            </button>
+          ))}
+        </div>
         <input
           type="search"
           value={search}
@@ -308,6 +332,7 @@ const ReferralList = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {referrals
             .filter(r => {
+              if (statusFilter && (statusFilter === 'pending' || statusFilter === 'completed') && r.status !== statusFilter) return false;
               if (!search) return true;
               const s = search.toLowerCase();
               return (
@@ -643,12 +668,20 @@ const PatientDetails = () => {
             <form onSubmit={async (e) => {
               e.preventDefault();
               const target = e.target as any;
+              const files = Array.from(target.report_files.files as File[]).slice(0, 3);
+              const reportFiles = await Promise.all(files.map(file => new Promise<{ name: string; type: string; size: number; data: string }>((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve({ name: file.name, type: file.type, size: file.size, data: String(reader.result) });
+                reader.onerror = () => reject(reader.error);
+                reader.readAsDataURL(file);
+              })));
               await api.createRecord({
                 patient_id: patient.id,
                 doctor_id: 'DOC-001', // Mock doctor ID
                 diagnosis: target.diagnosis.value,
                 prescription: target.prescription.value,
-                reports: target.reports.value
+                reports: target.reports.value,
+                report_files: reportFiles
               });
               setShowRecordForm(false);
               window.location.reload();
@@ -664,6 +697,11 @@ const PatientDetails = () => {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Diagnostic Reports (Links/Notes)</label>
                 <input name="reports" placeholder="e.g. Blood Test Link, X-Ray ID" className="w-full px-4 py-2 rounded-xl border border-gray-200 outline-none focus:ring-2 focus:ring-emerald-500" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Attach Report Files</label>
+                <input name="report_files" type="file" multiple accept=".pdf,.png,.jpg,.jpeg,.webp" className="w-full px-4 py-2 rounded-xl border border-gray-200 p-2 text-sm" />
+                <p className="text-xs text-gray-400 mt-1">Attach up to 3 files. Keep each file under 2 MB.</p>
               </div>
               <button type="submit" className="w-full bg-emerald-600 text-white py-3 rounded-xl font-bold">Save Record</button>
             </form>
@@ -806,6 +844,8 @@ const ReferralView = () => {
                 <div className="space-y-2">
                   <p className="text-xl font-bold">{data.referral.patient_name}</p>
                   <p className="text-gray-500">{data.referral.age} years • {data.referral.gender}</p>
+                  <p className="text-sm text-gray-500">{data.referral.patient_contact}</p>
+                  <p className="text-sm text-gray-500">{data.referral.patient_address}</p>
                 </div>
               </div>
               <div>
@@ -843,6 +883,19 @@ const ReferralView = () => {
                   <span>Mark as Completed</span>
                 </button>
               )}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+            <div className="bg-white border border-emerald-100 rounded-2xl p-5">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-emerald-700 mb-3 flex items-center gap-2"><Building2 className="h-4 w-4" /> Referring facility</h3>
+              <p className="font-bold text-gray-900">{data.referral.from_hospital}</p>
+              <p className="text-sm text-gray-500 mt-1">Origin facility coordinating this patient transfer</p>
+            </div>
+            <div className="bg-white border border-blue-100 rounded-2xl p-5">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-blue-700 mb-3 flex items-center gap-2"><MapPin className="h-4 w-4" /> Receiving facility</h3>
+              <p className="font-bold text-gray-900">{data.referral.to_hospital}</p>
+              <p className="text-sm text-gray-500 mt-1">Hospital responsible for specialist care</p>
             </div>
           </div>
 
@@ -897,6 +950,22 @@ const ReferralView = () => {
                     <p className="text-[10px] font-bold text-emerald-600 uppercase">Reports: <span className="font-normal text-gray-500 lowercase">{record.reports}</span></p>
                   </div>
                 )}
+                {record.report_files && record.report_files.length > 0 && (
+                  <div className="mt-2 pt-2 border-t border-gray-100">
+                    <p className="text-[10px] font-bold text-emerald-600 uppercase flex items-center gap-1 mb-1"><Paperclip className="h-3 w-3" /> Attached files</p>
+                    <div className="flex flex-wrap gap-2">
+                      {record.report_files.map(file => <a key={file.name} href={file.data} download={file.name} className="text-xs text-blue-600 hover:text-blue-800 underline">{file.name}</a>)}
+                    </div>
+                  </div>
+                )}
+                  {record.report_files && record.report_files.length > 0 && (
+                    <div className="mt-3 pt-3 border-t border-gray-200">
+                      <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider mb-2 flex items-center gap-1"><Paperclip className="h-3 w-3" /> Attached report files</p>
+                      <div className="flex flex-wrap gap-2">
+                        {record.report_files.map(file => <a key={file.name} href={file.data} download={file.name} className="text-xs text-blue-600 hover:text-blue-800 underline">{file.name}</a>)}
+                      </div>
+                    </div>
+                  )}
               </div>
             ))}
           </div>

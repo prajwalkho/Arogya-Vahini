@@ -13,8 +13,8 @@ export async function createApp(includeFrontend = process.env.VERCEL !== "1"): P
   app.use(express.json());
 
   const seeded = await seedDatabase(collections);
-  if (seeded.patients > 0) {
-    console.log(`Seeded ${seeded.patients} patients and ${seeded.referrals} referrals.`);
+  if (seeded.patients > 0 || seeded.healthRecords > 0) {
+    console.log(`Seeded ${seeded.patients} patients, ${seeded.referrals} referrals, and ${seeded.healthRecords} medical histories.`);
   }
 
   app.get("/api/patients", async (_req, res) => {
@@ -77,6 +77,62 @@ export async function createApp(includeFrontend = process.env.VERCEL !== "1"): P
     res.json(withoutMongoId(patient));
   });
 
+  app.get("/api/patients/:id", async (req, res) => {
+    if (publicDemoMode) {
+      res.status(403).json({ error: "Patient records are private." });
+      return;
+    }
+    const patient = await collections.patients.findOne({ id: req.params.id });
+    if (!patient) {
+      res.status(404).json({ error: "Patient not found" });
+      return;
+    }
+    res.json(withoutMongoId(patient));
+  });
+
+  app.patch("/api/patients/:id", async (req, res) => {
+    if (publicDemoMode) {
+      res.status(403).json({ error: "Patient updates require private access." });
+      return;
+    }
+    const allowedFields = ["name", "age", "gender", "contact", "address"] as const;
+    const updates = Object.fromEntries(
+      allowedFields.filter((field) => req.body[field] !== undefined).map((field) => [field, req.body[field]])
+    );
+    if (Object.keys(updates).length === 0) {
+      res.status(400).json({ error: "At least one patient field is required." });
+      return;
+    }
+    const result = await collections.patients.updateOne({ id: req.params.id }, { $set: updates });
+    if (result.matchedCount === 0) {
+      res.status(404).json({ error: "Patient not found" });
+      return;
+    }
+    const patient = await collections.patients.findOne({ id: req.params.id });
+    res.json(withoutMongoId(patient!));
+  });
+
+  app.delete("/api/patients/:id", async (req, res) => {
+    if (publicDemoMode) {
+      res.status(403).json({ error: "Patient deletion requires private access." });
+      return;
+    }
+    const patient = await collections.patients.findOne({ id: req.params.id });
+    if (!patient) {
+      res.status(404).json({ error: "Patient not found" });
+      return;
+    }
+    const referrals = await collections.referrals.find({ patient_id: patient.id }, { projection: { id: 1 } }).toArray();
+    const referralIds = referrals.map((referral) => referral.id);
+    await Promise.all([
+      collections.patients.deleteOne({ id: patient.id }),
+      collections.healthRecords.deleteMany({ patient_id: patient.id }),
+      collections.referrals.deleteMany({ patient_id: patient.id }),
+      referralIds.length > 0 ? collections.referralHistory.deleteMany({ referral_id: { $in: referralIds } }) : Promise.resolve(),
+    ]);
+    res.json({ success: true, id: patient.id });
+  });
+
   app.get("/api/patients/:id/records", async (req, res) => {
     if (publicDemoMode) {
       res.status(403).json({ error: "Health records are private." });
@@ -86,15 +142,66 @@ export async function createApp(includeFrontend = process.env.VERCEL !== "1"): P
     res.json(records.map(withoutMongoId));
   });
 
+  app.get("/api/records/:id", async (req, res) => {
+    if (publicDemoMode) {
+      res.status(403).json({ error: "Health records are private." });
+      return;
+    }
+    const record = await collections.healthRecords.findOne({ id: req.params.id });
+    if (!record) {
+      res.status(404).json({ error: "Health record not found" });
+      return;
+    }
+    res.json(withoutMongoId(record));
+  });
+
   app.post("/api/records", async (req, res) => {
     if (publicDemoMode) {
       res.status(403).json({ error: "Health records require private access." });
       return;
     }
-    const { patient_id, doctor_id, diagnosis, prescription, reports } = req.body;
-    const record = { id: uuidv4(), patient_id, doctor_id, diagnosis, prescription, reports: JSON.stringify(reports ?? null), created_at: new Date() };
+    const { patient_id, doctor_id, diagnosis, prescription, reports, report_files } = req.body;
+    const record = { id: uuidv4(), patient_id, doctor_id, diagnosis, prescription, reports: reports ?? "", report_files: report_files ?? [], created_at: new Date() };
     await collections.healthRecords.insertOne(record);
     res.json({ id: record.id, patient_id: record.patient_id, diagnosis: record.diagnosis });
+  });
+
+  app.patch("/api/records/:id", async (req, res) => {
+    if (publicDemoMode) {
+      res.status(403).json({ error: "Health record updates require private access." });
+      return;
+    }
+    const allowedFields = ["doctor_id", "diagnosis", "prescription", "reports", "report_files"] as const;
+    const updates = Object.fromEntries(
+      allowedFields.filter((field) => req.body[field] !== undefined).map((field) => [
+        field,
+        req.body[field],
+      ])
+    );
+    if (Object.keys(updates).length === 0) {
+      res.status(400).json({ error: "At least one health record field is required." });
+      return;
+    }
+    const result = await collections.healthRecords.updateOne({ id: req.params.id }, { $set: updates });
+    if (result.matchedCount === 0) {
+      res.status(404).json({ error: "Health record not found" });
+      return;
+    }
+    const record = await collections.healthRecords.findOne({ id: req.params.id });
+    res.json(withoutMongoId(record!));
+  });
+
+  app.delete("/api/records/:id", async (req, res) => {
+    if (publicDemoMode) {
+      res.status(403).json({ error: "Health record deletion requires private access." });
+      return;
+    }
+    const result = await collections.healthRecords.deleteOne({ id: req.params.id });
+    if (result.deletedCount === 0) {
+      res.status(404).json({ error: "Health record not found" });
+      return;
+    }
+    res.json({ success: true, id: req.params.id });
   });
 
   app.post("/api/referrals", async (req, res) => {
@@ -107,6 +214,69 @@ export async function createApp(includeFrontend = process.env.VERCEL !== "1"): P
     await collections.referrals.insertOne(referral);
     await collections.referralHistory.insertOne({ id: uuidv4(), referral_id: referral.id, status: "pending", created_at: new Date() });
     res.json({ id: referral.id, token: referral.token });
+  });
+
+  app.get("/api/referrals/id/:id", async (req, res) => {
+    if (publicDemoMode) {
+      res.status(403).json({ error: "Referral details are private." });
+      return;
+    }
+    const referral = await collections.referrals.findOne({ id: req.params.id });
+    if (!referral) {
+      res.status(404).json({ error: "Referral not found" });
+      return;
+    }
+    res.json(withoutMongoId(referral));
+  });
+
+  app.patch("/api/referrals/id/:id", async (req, res) => {
+    if (publicDemoMode) {
+      res.status(403).json({ error: "Referral updates require private access." });
+      return;
+    }
+    const allowedFields = ["from_hospital", "to_hospital", "reason"] as const;
+    const updates = Object.fromEntries(
+      allowedFields.filter((field) => req.body[field] !== undefined).map((field) => [field, req.body[field]])
+    );
+    if (req.body.status !== undefined) {
+      if (req.body.status !== "pending" && req.body.status !== "completed") {
+        res.status(400).json({ error: "Referral status must be pending or completed." });
+        return;
+      }
+      updates.status = req.body.status;
+    }
+    if (Object.keys(updates).length === 0) {
+      res.status(400).json({ error: "At least one referral field is required." });
+      return;
+    }
+    const referral = await collections.referrals.findOne({ id: req.params.id });
+    if (!referral) {
+      res.status(404).json({ error: "Referral not found" });
+      return;
+    }
+    await collections.referrals.updateOne({ id: referral.id }, { $set: updates });
+    if (updates.status && updates.status !== referral.status) {
+      await collections.referralHistory.insertOne({ id: uuidv4(), referral_id: referral.id, status: updates.status, created_at: new Date() });
+    }
+    const updatedReferral = await collections.referrals.findOne({ id: referral.id });
+    res.json(withoutMongoId(updatedReferral!));
+  });
+
+  app.delete("/api/referrals/id/:id", async (req, res) => {
+    if (publicDemoMode) {
+      res.status(403).json({ error: "Referral deletion requires private access." });
+      return;
+    }
+    const referral = await collections.referrals.findOne({ id: req.params.id });
+    if (!referral) {
+      res.status(404).json({ error: "Referral not found" });
+      return;
+    }
+    await Promise.all([
+      collections.referrals.deleteOne({ id: referral.id }),
+      collections.referralHistory.deleteMany({ referral_id: referral.id }),
+    ]);
+    res.json({ success: true, id: referral.id });
   });
 
   app.get("/api/referrals/:token", async (req, res) => {
@@ -126,7 +296,7 @@ export async function createApp(includeFrontend = process.env.VERCEL !== "1"): P
       collections.referralHistory.find({ referral_id: referral.id }).sort({ created_at: -1 }).toArray(),
     ]);
     res.json({
-      referral: { ...withoutMongoId(referral), patient_name: patient?.name, age: patient?.age, gender: patient?.gender },
+      referral: { ...withoutMongoId(referral), patient_name: patient?.name, age: patient?.age, gender: patient?.gender, patient_contact: patient?.contact, patient_address: patient?.address },
       records: records.map(withoutMongoId),
       history: history.map(withoutMongoId),
     });
@@ -138,8 +308,16 @@ export async function createApp(includeFrontend = process.env.VERCEL !== "1"): P
       return;
     }
     const { status } = req.body;
+    if (status !== "pending" && status !== "completed") {
+      res.status(400).json({ error: "Referral status must be pending or completed." });
+      return;
+    }
     const referral = await collections.referrals.findOne({ token: req.params.token });
-    if (referral) {
+    if (!referral) {
+      res.status(404).json({ error: "Referral not found" });
+      return;
+    }
+    if (referral.status !== status) {
       await collections.referrals.updateOne({ token: req.params.token }, { $set: { status } });
       await collections.referralHistory.insertOne({ id: uuidv4(), referral_id: referral.id, status, created_at: new Date() });
     }

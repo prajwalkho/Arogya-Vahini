@@ -17,6 +17,7 @@ export interface HealthRecordDocument {
   diagnosis: string;
   prescription: string;
   reports: string;
+  report_files?: Array<{ name: string; type: string; size: number; data: string }>;
   created_at: Date;
 }
 

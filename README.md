@@ -126,12 +126,26 @@ arogya-vahini/
 
 ### Patients
 - `GET /api/patients` - Get all patients
+- `GET /api/patients/:id` - Get one patient
 - `POST /api/patients` - Create new patient
+- `PATCH /api/patients/:id` - Update patient fields
+- `DELETE /api/patients/:id` - Delete patient and related records/referrals
 - `GET /api/patients/:id/records` - Get patient health records
+
+### Health Records
+- `GET /api/records/:id` - Get one health record
+- `POST /api/records` - Create health record
+- `PATCH /api/records/:id` - Update health record fields
+- `DELETE /api/records/:id` - Delete health record
 
 ### Referrals
 - `GET /api/referrals` - Get all referrals
 - `POST /api/referrals` - Create new referral
+- `GET /api/referrals/id/:id` - Get one referral by ID
+- `PATCH /api/referrals/id/:id` - Update referral fields
+- `DELETE /api/referrals/id/:id` - Delete referral and status history
+- `GET /api/referrals/:token` - Get referral details, records, and history by token
+- `PATCH /api/referrals/:token/status` - Update referral status and append history
 
 ### Statistics
 - `GET /api/stats` - Get dashboard statistics

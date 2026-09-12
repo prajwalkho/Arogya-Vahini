@@ -15,6 +15,7 @@ export interface HealthRecord {
   diagnosis: string;
   prescription: string;
   reports: string;
+  report_files?: Array<{ name: string; type: string; size: number; data: string }>;
   created_at: string;
 }
 
@@ -30,6 +31,8 @@ export interface Referral {
   patient_name?: string;
   age?: number;
   gender?: string;
+  patient_contact?: string;
+  patient_address?: string;
 }
 
 export interface ReferralHistory {
