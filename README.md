@@ -33,7 +33,7 @@ Demo URL - [Arogya-Vahini](https://arogya-vahini-dun.vercel.app/)
 ### Backend
 - **Node.js** - JavaScript runtime
 - **Express.js** - Web framework
-- **SQLite** - Lightweight database with better-sqlite3
+- **MongoDB Atlas** - Cloud database for patients, health records, and referrals
 - **JWT** - Authentication tokens
 - **bcryptjs** - Password hashing
 
@@ -62,6 +62,8 @@ Create a `.env.local` file in the root directory:
 ```env
 GEMINI_API_KEY=your_google_gemini_api_key_here
 APP_URL=http://localhost:3000
+MONGO_URL=your_mongodb_connection_string
+MONGO_DB_NAME=arogya_vahini
 ```
 
 ### 4. Start the Development Server
@@ -70,6 +72,17 @@ npm run dev
 ```
 
 The application will be available at `http://localhost:3000`
+
+### Seed the Local Database
+
+The development server seeds the database automatically when fewer than 10 patients exist. To seed it explicitly, run:
+
+```bash
+npm run seed
+```
+
+The command creates the MongoDB collections when needed and is safe to run again after the database has been seeded. The MongoDB URL is read from `MONGO_URL` in `.env.local`.
+
 
 ## 📖 Usage
 
@@ -103,7 +116,8 @@ arogya-vahini/
 ├── vite.config.ts      # Vite configuration
 ├── tsconfig.json       # TypeScript configuration
 ├── tailwind.config.js  # Tailwind CSS configuration
-└── arogya_vahini.db    # SQLite database (auto-generated)
+├── mongo.ts            # MongoDB connection and collection definitions
+└── seed.ts             # MongoDB demo-data seed command
 ```
 
 ## 🔍 API Endpoints

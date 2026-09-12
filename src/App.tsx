@@ -23,7 +23,11 @@ import {
   ShieldCheck,
   ArrowUpRight,
   TrendingUp,
-  Camera
+  Camera,
+  House,
+  BarChart3,
+  Target,
+  Lightbulb
 } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import { Html5QrcodeScanner } from 'html5-qrcode';
@@ -49,6 +53,7 @@ const Navbar = () => {
                 <div className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse"></div>
                 <span>Sync Active</span>
               </div>
+              <Link to="/" className="hover:bg-emerald-800 px-3 py-2 rounded-md text-sm font-medium">Home</Link>
               <Link to="/patients" className="hover:bg-emerald-800 px-3 py-2 rounded-md text-sm font-medium">Patients</Link>
               <Link to="/referrals" className="hover:bg-emerald-800 px-3 py-2 rounded-md text-sm font-medium">Referrals</Link>
               <Link to="/scan" className="bg-emerald-600 hover:bg-emerald-500 px-4 py-2 rounded-md text-sm font-medium flex items-center space-x-2">
@@ -66,6 +71,7 @@ const Navbar = () => {
       </div>
       {isOpen && (
         <div className="md:hidden bg-emerald-900 px-2 pt-2 pb-3 space-y-1 sm:px-3">
+          <Link to="/" className="block hover:bg-emerald-800 px-3 py-2 rounded-md text-base font-medium flex items-center space-x-2"><House className="h-4 w-4" /><span>Home</span></Link>
           <Link to="/patients" className="block hover:bg-emerald-800 px-3 py-2 rounded-md text-base font-medium">Patients</Link>
           <Link to="/referrals" className="block hover:bg-emerald-800 px-3 py-2 rounded-md text-base font-medium">Referrals</Link>
           <Link to="/scan" className="block bg-emerald-600 hover:bg-emerald-500 px-3 py-2 rounded-md text-base font-medium">Scan Token</Link>
@@ -88,6 +94,16 @@ const Dashboard = () => {
   useEffect(() => {
     api.getStats().then(setStats);
   }, []);
+
+  const totalReferrals = (stats?.activeReferrals || 0) + (stats?.completedReferrals || 0);
+  const completionRate = totalReferrals > 0 ? Math.round(((stats?.completedReferrals || 0) / totalReferrals) * 100) : 0;
+  const pendingRate = totalReferrals > 0 ? Math.round(((stats?.activeReferrals || 0) / totalReferrals) * 100) : 0;
+  const referralCoverage = stats?.totalPatients ? Math.min(100, Math.round((totalReferrals / stats.totalPatients) * 100)) : 0;
+  const analysisMessage = totalReferrals === 0
+    ? 'Referral activity will appear here as care transfers are recorded.'
+    : completionRate >= 70
+      ? 'Most referrals are reaching completion, indicating a healthy handoff pipeline.'
+      : 'A large share of referrals is still active. Review pending handoffs to keep care moving.';
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
@@ -183,6 +199,75 @@ const Dashboard = () => {
           </div>
         </div>
       </div>
+
+      <section className="mt-12" aria-labelledby="referral-insights-heading">
+        <div className="flex items-end justify-between gap-4 mb-6">
+          <div>
+            <div className="flex items-center space-x-2 text-emerald-700 mb-2">
+              <BarChart3 className="h-5 w-5" />
+              <span className="text-xs font-bold uppercase tracking-widest">Live analysis</span>
+            </div>
+            <h2 id="referral-insights-heading" className="text-2xl font-bold text-gray-900">Referral Insights</h2>
+            <p className="text-gray-500">A quick view of patient handoffs across the network</p>
+          </div>
+          <span className="hidden sm:inline-flex items-center gap-2 text-xs font-bold text-gray-500 bg-white border border-gray-200 px-3 py-2 rounded-full">
+            <span className="h-2 w-2 rounded-full bg-emerald-500" />
+            Current snapshot
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+          <div className="lg:col-span-3 bg-slate-900 text-white rounded-3xl p-6 sm:p-8 shadow-sm overflow-hidden relative">
+            <div className="relative z-10">
+              <div className="flex items-start justify-between mb-8">
+                <div>
+                  <p className="text-sm text-slate-300 font-medium">Referral outcome split</p>
+                  <p className="text-3xl font-bold mt-1">{totalReferrals.toLocaleString()} <span className="text-base font-medium text-slate-400">total handoffs</span></p>
+                </div>
+                <Target className="h-7 w-7 text-emerald-300" />
+              </div>
+
+              <div className="h-5 w-full bg-slate-700 rounded-full overflow-hidden flex" aria-label={`${completionRate}% completed and ${pendingRate}% pending`}>
+                <div className="bg-emerald-400 h-full transition-all duration-700" style={{ width: `${completionRate}%` }} />
+                <div className="bg-amber-300 h-full transition-all duration-700" style={{ width: `${pendingRate}%` }} />
+              </div>
+              <div className="grid grid-cols-2 gap-4 mt-5">
+                <div className="flex items-center gap-3">
+                  <span className="h-3 w-3 rounded-full bg-emerald-400" />
+                  <div><p className="text-2xl font-bold">{stats?.completedReferrals || 0}</p><p className="text-xs text-slate-400 uppercase tracking-wider">Completed</p></div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="h-3 w-3 rounded-full bg-amber-300" />
+                  <div><p className="text-2xl font-bold">{stats?.activeReferrals || 0}</p><p className="text-xs text-slate-400 uppercase tracking-wider">Pending</p></div>
+                </div>
+              </div>
+            </div>
+            <div className="absolute -right-16 -bottom-20 h-48 w-48 rounded-full border-[28px] border-emerald-400/10" />
+          </div>
+
+          <div className="lg:col-span-2 bg-white rounded-3xl p-6 sm:p-8 border border-emerald-100 shadow-sm">
+            <div className="flex items-center gap-2 mb-6">
+              <Lightbulb className="h-5 w-5 text-amber-500" />
+              <h3 className="font-bold text-gray-900">Operational readout</h3>
+            </div>
+            <p className="text-sm leading-6 text-gray-600 mb-7">{analysisMessage}</p>
+            <div className="space-y-5">
+              <div>
+                <div className="flex justify-between text-xs font-bold mb-2"><span className="text-gray-500">Completion rate</span><span className="text-emerald-700">{completionRate}%</span></div>
+                <div className="h-2 bg-emerald-50 rounded-full overflow-hidden"><div className="h-full bg-emerald-500 rounded-full transition-all duration-700" style={{ width: `${completionRate}%` }} /></div>
+              </div>
+              <div>
+                <div className="flex justify-between text-xs font-bold mb-2"><span className="text-gray-500">Pending share</span><span className="text-amber-600">{pendingRate}%</span></div>
+                <div className="h-2 bg-amber-50 rounded-full overflow-hidden"><div className="h-full bg-amber-400 rounded-full transition-all duration-700" style={{ width: `${pendingRate}%` }} /></div>
+              </div>
+              <div>
+                <div className="flex justify-between text-xs font-bold mb-2"><span className="text-gray-500">Patient referral coverage</span><span className="text-blue-600">{referralCoverage}%</span></div>
+                <div className="h-2 bg-blue-50 rounded-full overflow-hidden"><div className="h-full bg-blue-500 rounded-full transition-all duration-700" style={{ width: `${referralCoverage}%` }} /></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
     </div>
   );
 };
