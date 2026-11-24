@@ -52,7 +52,7 @@ export async function connectMongo(): Promise<{ client: MongoClient; database: D
   const mongoUrl = process.env.MONGO_URL;
   if (!mongoUrl) {
     throw new Error(
-      "MONGO_URL is required. Add your MongoDB Atlas connection string to .env.local (local) or Vercel project environment variables (deployment)."
+      "MONGO_URL is required. Copy .env.example to .env.local, then set MONGO_URL to your MongoDB Atlas connection string. .env.example is not loaded automatically."
     );
   }
 
