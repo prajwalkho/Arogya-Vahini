@@ -38,6 +38,19 @@
       "timeoutSeconds": 180
     },
     {
+      "name": "vercel-seeding-disabled-without-opt-in",
+      "kind": "process",
+      "command": "npm",
+      "args": ["run", "seed"],
+      "env": {
+        "VERCEL": "1",
+        "SEED_DEMO_DATA": "false"
+      },
+      "verificationMethod": "output-contains",
+      "expected": "Demo data seeding is disabled for this environment.",
+      "timeoutSeconds": 60
+    },
+    {
       "name": "home-route",
       "kind": "http-probe",
       "startCommand": "npm",

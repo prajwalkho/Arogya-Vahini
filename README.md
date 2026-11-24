@@ -96,9 +96,9 @@ Vercel sets `VERCEL=1`. By default, this app keeps patient, health-record, and r
 1. Enable Vercel Deployment Protection for production and preview deployments, and restrict access to the authorized team.
 2. In Vercel project settings, set `MONGO_URL` and `MONGO_DB_NAME` to the same Atlas cluster and database used for the data you want to display.
 3. Set `VERCEL_PRIVATE_DATA_ACCESS=true` in the same Vercel environments. Do this only after Deployment Protection is active.
-4. Ensure `PUBLIC_DEMO_MODE` is not set to `true`. If this is a demo/test database and you want Vercel to seed demo records, set `SEED_DEMO_DATA=true`; then redeploy.
+4. Ensure `PUBLIC_DEMO_MODE` is not set to `true`. For a demo/test database, set `SEED_DEMO_DATA=true`; the Vercel build seeds up to 1,200 demo patients and 650 referrals before building, then redeploy.
 
-The private-data flag is an explicit opt-in; without it, Vercel continues to deny private API access. `PUBLIC_DEMO_MODE=true` always keeps private data blocked. Demo seeding is off by default on Vercel and can be explicitly enabled with `SEED_DEMO_DATA=true`. Seeding is additive: it does not delete existing records, and it creates sample health histories only for newly seeded demo patients. Use it only with a demo/test database.
+The private-data flag is an explicit opt-in; without it, Vercel continues to deny private API access. `PUBLIC_DEMO_MODE=true` always keeps private data blocked. Demo seeding is off by default on Vercel and can be explicitly enabled with `SEED_DEMO_DATA=true`. Seeding is additive: it does not delete existing records, and it creates sample health histories only for newly seeded demo patients. It runs only when the database has fewer than 1,200 patients; once seeded, later deployments skip it. Use it only with a demo/test database.
 
 This setup grants access to anyone admitted by the Vercel Deployment Protection policy; it does not provide per-user roles inside the app. Do not use it for a public deployment or expose real patient data publicly.
 

@@ -13,7 +13,7 @@ export async function createApp(includeFrontend = process.env.VERCEL !== "1"): P
 
   app.use(express.json());
 
-  if (shouldSeedDemoData(process.env)) {
+  if (process.env.VERCEL !== "1" && shouldSeedDemoData(process.env)) {
     const seeded = await seedDatabase(collections);
     if (seeded.patients > 0 || seeded.healthRecords > 0) {
       console.log(`Seeded ${seeded.patients} patients, ${seeded.referrals} referrals, and ${seeded.healthRecords} medical histories.`);

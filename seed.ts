@@ -1,8 +1,12 @@
 import dotenv from "dotenv";
 import { v4 as uuidv4 } from "uuid";
 import { connectMongo, MongoCollections } from "./mongo";
+import { shouldSeedDemoData } from "./server-config";
 
 dotenv.config({ path: ".env.local" });
+
+const DEMO_PATIENTS_TO_SEED = 1200;
+const DEMO_REFERRALS_TO_SEED = 650;
 
 export function selectPatientsNeedingDemoRecords<T extends { id: string }>(
   patients: T[],
@@ -24,8 +28,8 @@ export async function seedDatabase(collections: MongoCollections): Promise<{ pat
   const referralHistory = [];
   const demoPatientIds = new Set<string>();
 
-  if (patientCount < 10) {
-    for (let i = 0; i < 850; i += 1) {
+  if (patientCount < DEMO_PATIENTS_TO_SEED) {
+    for (let i = 0; i < DEMO_PATIENTS_TO_SEED; i += 1) {
       const patientId = uuidv4();
       demoPatientIds.add(patientId);
       const createdAt = new Date(Date.now() - Math.random() * 1000 * 60 * 60 * 24 * 30);
@@ -39,7 +43,7 @@ export async function seedDatabase(collections: MongoCollections): Promise<{ pat
         created_at: createdAt,
       });
 
-      if (i < 460) {
+      if (i < DEMO_REFERRALS_TO_SEED) {
         const referralId = uuidv4();
         const status: "pending" | "completed" = i < 120 ? "pending" : "completed";
         const referralDate = new Date(createdAt.getTime() + 1000 * 60 * 60);
@@ -101,6 +105,11 @@ export async function seedDatabase(collections: MongoCollections): Promise<{ pat
 }
 
 async function main(): Promise<void> {
+  if (!shouldSeedDemoData(process.env)) {
+    console.log("Demo data seeding is disabled for this environment.");
+    return;
+  }
+
   const { client, collections } = await connectMongo();
   try {
     const seeded = await seedDatabase(collections);
