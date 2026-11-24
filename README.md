@@ -70,6 +70,8 @@ GEMINI_API_KEY=your_google_gemini_api_key_here
 APP_URL=http://localhost:3000
 MONGO_URL=your_mongodb_connection_string
 MONGO_DB_NAME=arogya_vahini
+MONGO_DEMO_DB_NAME=arogya_vahini_demo
+SEED_DEMO_DATA=true
 ```
 
 ### 4. Start the Development Server
@@ -79,28 +81,31 @@ npm run dev
 
 The application will be available at `http://localhost:3000`
 
-### Seed the Local Database
+### Seed a Demo Database
 
-The development server seeds the database automatically when fewer than 10 patients exist. To seed it explicitly, run:
+To avoid mixing sample patients into private records, configure a separate `MONGO_DEMO_DB_NAME` and set `SEED_DEMO_DATA=true` before seeding:
 
 ```bash
 npm run seed
 ```
 
-The command creates the MongoDB collections when needed and is safe to run again after the database has been seeded. The MongoDB URL is read from `MONGO_URL` in `.env.local`.
+The command adds 1,200 synthetic demo patients, 650 referrals, and their health histories when the demo database has fewer than 1,200 patients. It never deletes records and does not add synthetic histories to existing patients.
 
-### Deploying privately to Vercel
+### Deploying a public demo to Vercel
 
-Vercel sets `VERCEL=1`. By default, this app keeps patient, health-record, and referral APIs private in Vercel deployments. To make the data available to your Vercel team:
+For a public demo, use a **separate Atlas database containing only synthetic demo data**. Do not point public mode at the database containing real patient records. The demo database name must differ from `MONGO_DB_NAME`.
 
-1. Enable Vercel Deployment Protection for production and preview deployments, and restrict access to the authorized team.
-2. In Vercel project settings, set `MONGO_URL` and `MONGO_DB_NAME` to the same Atlas cluster and database used for the data you want to display.
-3. Set `VERCEL_PRIVATE_DATA_ACCESS=true` in the same Vercel environments. Do this only after Deployment Protection is active.
-4. Ensure `PUBLIC_DEMO_MODE` is not set to `true`. For a demo/test database, set `SEED_DEMO_DATA=true`; the Vercel build seeds up to 1,200 demo patients and 650 referrals before building, then redeploy.
+Set these Vercel project environment variables for the deployment:
 
-The private-data flag is an explicit opt-in; without it, Vercel continues to deny private API access. `PUBLIC_DEMO_MODE=true` always keeps private data blocked. Demo seeding is off by default on Vercel and can be explicitly enabled with `SEED_DEMO_DATA=true`. Seeding is additive: it does not delete existing records, and it creates sample health histories only for newly seeded demo patients. It runs only when the database has fewer than 1,200 patients; once seeded, later deployments skip it. Use it only with a demo/test database.
+- `MONGO_URL`: Atlas connection string for the cluster.
+- `MONGO_DB_NAME`: private database name; public demo mode will not read it.
+- `MONGO_DEMO_DB_NAME`: a dedicated demo database name, such as `arogya_vahini_demo`.
+- `PUBLIC_DEMO_MODE=true`
+- `SEED_DEMO_DATA=true`
 
-This setup grants access to anyone admitted by the Vercel Deployment Protection policy; it does not provide per-user roles inside the app. Do not use it for a public deployment or expose real patient data publicly.
+The Vercel build runs the seed step before building. If the demo database has fewer than 1,200 patients, it adds 1,200 synthetic demo patients, 650 referrals, and their demo health histories. Seeding never deletes existing records and only creates health histories for newly seeded demo patients. Later builds skip seeding once the database has at least 1,200 patients. In public demo mode, API reads and anonymous patient registration use only `MONGO_DEMO_DB_NAME`. Patient updates, health-record writes, referrals, and deletes remain blocked. The registration page warns users to enter fictional details only; never use the public demo for real patient information.
+
+Public demo mode displays only the dedicated synthetic database and leaves the private database untouched. For private staff access instead, enable Vercel Deployment Protection and set `VERCEL_PRIVATE_DATA_ACCESS=true`; that mode uses `MONGO_DB_NAME`.
 
 
 ## 📖 Usage

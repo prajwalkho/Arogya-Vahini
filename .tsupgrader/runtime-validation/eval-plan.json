@@ -7,6 +7,19 @@
       "command": "npm",
       "args": ["ci"],
       "timeoutSeconds": 600
+    },
+    {
+      "command": "npm",
+      "args": ["run", "seed"],
+      "env": {
+        "VERCEL": "1",
+        "PUBLIC_DEMO_MODE": "true",
+        "SEED_DEMO_DATA": "true",
+        "MONGO_URL": "mongodb://127.0.0.1:27017",
+        "MONGO_DB_NAME": "arogya_vahini_eval_private",
+        "MONGO_DEMO_DB_NAME": "arogya_vahini_eval_demo"
+      },
+      "timeoutSeconds": 180
     }
   ],
   "assertions": [
@@ -59,9 +72,10 @@
       "env": {
         "PORT": "3010",
         "MONGO_URL": "mongodb://127.0.0.1:27017",
-        "MONGO_DB_NAME": "arogya_vahini_eval",
+        "MONGO_DB_NAME": "arogya_vahini_eval_private",
+        "MONGO_DEMO_DB_NAME": "arogya_vahini_eval_demo",
         "SEED_DEMO_DATA": "false",
-        "PUBLIC_DEMO_MODE": "false"
+        "PUBLIC_DEMO_MODE": "true"
       },
       "verificationMethod": "http-status",
       "expected": "200",
@@ -75,13 +89,32 @@
       "url": "http://localhost:3010/api/patients",
       "env": {
         "PORT": "3010",
-        "PUBLIC_DEMO_MODE": "false",
+        "PUBLIC_DEMO_MODE": "true",
         "MONGO_URL": "mongodb://127.0.0.1:27017",
-        "MONGO_DB_NAME": "arogya_vahini_eval",
+        "MONGO_DB_NAME": "arogya_vahini_eval_private",
+        "MONGO_DEMO_DB_NAME": "arogya_vahini_eval_demo",
         "SEED_DEMO_DATA": "false"
       },
-      "verificationMethod": "http-status",
-      "expected": "200",
+      "verificationMethod": "output-contains",
+      "expected": "Aarav",
+      "timeoutSeconds": 120
+    },
+    {
+      "name": "public-demo-referral-api",
+      "kind": "http-probe",
+      "startCommand": "npm",
+      "startArgs": ["run", "dev"],
+      "url": "http://localhost:3010/api/referrals",
+      "env": {
+        "PORT": "3010",
+        "PUBLIC_DEMO_MODE": "true",
+        "MONGO_URL": "mongodb://127.0.0.1:27017",
+        "MONGO_DB_NAME": "arogya_vahini_eval_private",
+        "MONGO_DEMO_DB_NAME": "arogya_vahini_eval_demo",
+        "SEED_DEMO_DATA": "false"
+      },
+      "verificationMethod": "output-contains",
+      "expected": "Primary Health Center A",
       "timeoutSeconds": 120
     }
   ]

@@ -5,6 +5,7 @@ import { v4 as uuidv4 } from "uuid";
 import { connectMongo, withoutMongoId } from "./mongo";
 import { seedDatabase } from "./seed";
 import { isPublicDemoMode, shouldSeedDemoData } from "./server-config";
+import { validatePatientRegistration } from "./patient-validation";
 
 export async function createApp(includeFrontend = process.env.VERCEL !== "1"): Promise<{ app: express.Express; client: Awaited<ReturnType<typeof connectMongo>>["client"] }> {
   const { client, collections } = await connectMongo();
@@ -21,19 +22,11 @@ export async function createApp(includeFrontend = process.env.VERCEL !== "1"): P
   }
 
   app.get("/api/patients", async (_req, res) => {
-    if (publicDemoMode) {
-      res.status(403).json({ error: "Patient directory is private." });
-      return;
-    }
     const patients = await collections.patients.find().sort({ created_at: -1 }).toArray();
     res.json(patients.map(withoutMongoId));
   });
 
   app.get("/api/referrals", async (_req, res) => {
-    if (publicDemoMode) {
-      res.status(403).json({ error: "Referral directory is private." });
-      return;
-    }
     const referrals = await collections.referrals.find().sort({ created_at: -1 }).toArray();
     const referralsWithPatients = await Promise.all(referrals.map(async (referral) => {
       const patient = await collections.patients.findOne({ id: referral.patient_id });
@@ -63,28 +56,22 @@ export async function createApp(includeFrontend = process.env.VERCEL !== "1"): P
       totalPatients,
       activeReferrals,
       completedReferrals,
-      recentActivity: publicDemoMode
-        ? recentActivity.map(({ type, created_at, detail }) => ({ type, created_at, patient_name: "Private patient", detail }))
-        : recentActivity,
+      recentActivity,
     });
   });
 
   app.post("/api/patients", async (req, res) => {
-    if (publicDemoMode) {
-      res.status(403).json({ error: "Patient registration requires private access." });
+    const validation = validatePatientRegistration(req.body);
+    if (validation.error) {
+      res.status(400).json({ error: validation.error });
       return;
     }
-    const { name, age, gender, contact, address } = req.body;
-    const patient = { id: uuidv4(), name, age, gender, contact, address, created_at: new Date() };
+    const patient = { id: uuidv4(), ...validation.data, created_at: new Date() };
     await collections.patients.insertOne(patient);
     res.json(withoutMongoId(patient));
   });
 
   app.get("/api/patients/:id", async (req, res) => {
-    if (publicDemoMode) {
-      res.status(403).json({ error: "Patient records are private." });
-      return;
-    }
     const patient = await collections.patients.findOne({ id: req.params.id });
     if (!patient) {
       res.status(404).json({ error: "Patient not found" });
@@ -137,19 +124,11 @@ export async function createApp(includeFrontend = process.env.VERCEL !== "1"): P
   });
 
   app.get("/api/patients/:id/records", async (req, res) => {
-    if (publicDemoMode) {
-      res.status(403).json({ error: "Health records are private." });
-      return;
-    }
     const records = await collections.healthRecords.find({ patient_id: req.params.id }).sort({ created_at: -1 }).toArray();
     res.json(records.map(withoutMongoId));
   });
 
   app.get("/api/records/:id", async (req, res) => {
-    if (publicDemoMode) {
-      res.status(403).json({ error: "Health records are private." });
-      return;
-    }
     const record = await collections.healthRecords.findOne({ id: req.params.id });
     if (!record) {
       res.status(404).json({ error: "Health record not found" });
@@ -220,10 +199,6 @@ export async function createApp(includeFrontend = process.env.VERCEL !== "1"): P
   });
 
   app.get("/api/referrals/id/:id", async (req, res) => {
-    if (publicDemoMode) {
-      res.status(403).json({ error: "Referral details are private." });
-      return;
-    }
     const referral = await collections.referrals.findOne({ id: req.params.id });
     if (!referral) {
       res.status(404).json({ error: "Referral not found" });
@@ -283,10 +258,6 @@ export async function createApp(includeFrontend = process.env.VERCEL !== "1"): P
   });
 
   app.get("/api/referrals/:token", async (req, res) => {
-    if (publicDemoMode) {
-      res.status(403).json({ error: "Referral details are private." });
-      return;
-    }
     const referral = await collections.referrals.findOne({ token: req.params.token });
     if (!referral) {
       res.status(404).json({ error: "Referral not found" });

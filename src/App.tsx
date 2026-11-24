@@ -459,6 +459,8 @@ const PatientList = () => {
 
 const NewPatient = () => {
   const navigate = useNavigate();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     age: '',
@@ -469,23 +471,36 @@ const NewPatient = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await api.createPatient({
-      ...formData,
-      age: parseInt(formData.age)
-    });
-    navigate('/patients');
+    setError(null);
+    setIsSubmitting(true);
+    try {
+      await api.createPatient({
+        ...formData,
+        age: parseInt(formData.age)
+      });
+      navigate('/patients');
+    } catch (submitError) {
+      setError(submitError instanceof Error ? submitError.message : 'Unable to register patient.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-8">
       <div className="bg-white p-8 rounded-2xl shadow-sm border border-emerald-100">
         <h1 className="text-2xl font-bold text-gray-900 mb-6">Register New Patient</h1>
+        <p className="mb-6 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900" role="note">
+          This is a public demo. Use fictional sample details only; do not enter real patient information.
+        </p>
+        {error && <p className="mb-4 text-sm text-red-700" role="alert">{error}</p>}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
             <input 
               required
               type="text" 
+              maxLength={120}
               className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:ring-2 focus:ring-emerald-500 outline-none"
               value={formData.name}
               onChange={e => setFormData({...formData, name: e.target.value})}
@@ -497,6 +512,9 @@ const NewPatient = () => {
               <input 
                 required
                 type="number" 
+                min={0}
+                max={130}
+                step={1}
                 className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:ring-2 focus:ring-emerald-500 outline-none"
                 value={formData.age}
                 onChange={e => setFormData({...formData, age: e.target.value})}
@@ -520,6 +538,7 @@ const NewPatient = () => {
             <input 
               required
               type="tel" 
+              maxLength={40}
               className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:ring-2 focus:ring-emerald-500 outline-none"
               value={formData.contact}
               onChange={e => setFormData({...formData, contact: e.target.value})}
@@ -530,13 +549,14 @@ const NewPatient = () => {
             <textarea 
               required
               rows={3}
+              maxLength={300}
               className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:ring-2 focus:ring-emerald-500 outline-none"
               value={formData.address}
               onChange={e => setFormData({...formData, address: e.target.value})}
             />
           </div>
-          <button type="submit" className="w-full bg-emerald-600 text-white py-3 rounded-xl font-bold hover:bg-emerald-700 transition-colors">
-            Register Patient
+          <button type="submit" disabled={isSubmitting} className="w-full bg-emerald-600 text-white py-3 rounded-xl font-bold hover:bg-emerald-700 transition-colors disabled:cursor-not-allowed disabled:opacity-60">
+            {isSubmitting ? 'Registering...' : 'Register Patient'}
           </button>
         </form>
       </div>

@@ -1,85 +1,15 @@
 {
-  "planHash": "7194df7dba85cf5d910f3e8572463b6cb03e76756ea291a79d3881f524be0438",
+  "planHash": "5cc357bb3469c77273d08b096b42c73fd7324902793f17e26b5f194caea595d4",
   "phase": "standalone",
-  "recordedAtUtc": "2026-11-24T15:18:14.3714977Z",
-  "retryCount": 2,
+  "recordedAtUtc": "2026-11-24T15:55:38.3540420Z",
+  "retryCount": 3,
   "resetBaseline": false,
   "complete": true,
   "result": {
-    "setupSucceeded": true,
-    "setupDurationMs": 12440,
-    "setupFailureOutput": null,
-    "assertions": [
-      {
-        "name": "typescript-check",
-        "kind": "process",
-        "verificationMethod": "exit-code",
-        "passed": true,
-        "timedOut": false,
-        "skipped": false,
-        "skippedReason": null,
-        "exitCode": 0,
-        "outputSample": "\r\n\u003E react-example@0.0.0 lint\r\n\u003E tsc --noEmit\r\n\r\n",
-        "durationMs": 3522
-      },
-      {
-        "name": "production-build",
-        "kind": "process",
-        "verificationMethod": "exit-code",
-        "passed": true,
-        "timedOut": false,
-        "skipped": false,
-        "skippedReason": null,
-        "exitCode": 0,
-        "outputSample": "\r\n\u003E react-example@0.0.0 build\r\n\u003E vite build\r\n\r\n\u001B[36mvite v6.4.1 \u001B[32mbuilding for production...\u001B[36m\u001B[39m\r\ntransforming...\r\n\u001B[32m\u2713\u001B[39m 2017 modules transformed.\r\nrendering chunks...\r\ncomputing gzip size...\r\n\u001B[2mdist/\u001B[22m\u001B[32mindex.html                 \u001B[39m\u001B[1m\u001B[2m  0.40 kB\u001B[22m\u001B[1m\u001B[22m\u001B[2m \u2502 gzip:   0.27 kB\u001B[22m\r\n\u001B[2mdist/\u001B[22m\u001B[35massets/index-CfIAi6co.css  \u001B[39m\u001B[1m\u001B[2m 28.94 kB\u001B[22m\u001B[1m\u001B[22m\u001B[2m \u2502 gzip:   5.97 kB\u001B[22m\r\n\u001B[2mdist/\u001B[22m\u001B[36massets/index-CHYIQJ0W.js   \u001B[39m\u001B[1m\u001B[33m704.38 kB\u001B[39m\u001B[22m\u001B[2m \u2502 gzip: 209.46 kB\u001B[22m\r\n\u001B[33m\r\n(!) Some chunks are larger than 500 kB after minification. Consider:\r\n- Using dynamic import() to code-split the application\r\n- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks\r\n- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.\u001B[39m\r\n\u001B[32m\u2713 built in 3.05s\u001B[39m\r\n",
-        "durationMs": 4208
-      },
-      {
-        "name": "tests-pass",
-        "kind": "process",
-        "verificationMethod": "test-results",
-        "passed": true,
-        "timedOut": false,
-        "skipped": false,
-        "skippedReason": null,
-        "exitCode": 0,
-        "outputSample": "\r\n\u003E react-example@0.0.0 test\r\n\u003E node --import tsx --test --test-reporter=tap tests/server-config.test.ts tests/seed.test.ts\r\n\r\nTAP version 13\r\n# [dotenv@17.3.1] injecting env (4) from .env.local -- tip: \u26A1\uFE0F secrets for agents: https://dotenvx.com/as2\r\n# Subtest: demo health-record seeding\r\n    # Subtest: only creates sample histories for newly seeded demo patients\r\n    ok 1 - only creates sample histories for newly seeded demo patients\r\n      ---\r\n      duration_ms: 1.4625\r\n      type: \u0027test\u0027\r\n      ...\r\n    1..1\r\nok 1 - demo health-record seeding\r\n  ---\r\n  duration_ms: 2.3478\r\n  type: \u0027suite\u0027\r\n  ...\r\n# Subtest: Vercel data access\r\n    # Subtest: denies private data on Vercel unless explicitly enabled\r\n    ok 1 - denies private data on Vercel unless explicitly enabled\r\n      ---\r\n      duration_ms: 0.5278\r\n      type: \u0027test\u0027\r\n      ...\r\n    # Subtest: keeps explicit public demo mode private-data-safe\r\n    ok 2 - keeps explicit public demo mode private-data-safe\r\n      ---\r\n      duration_ms: 0.1368\r\n      type: \u0027test\u0027\r\n      ...\r\n    1..2\r\nok 2 - Vercel data access\r\n  ---\r\n  duration_ms: 1.6403\r\n  type: \u0027suite\u0027\r\n  ...\r\n# Subtest: demo data seeding\r\n    # Subtest: does not seed data on Vercel\r\n    ok 1 - does not seed data on Vercel\r\n      ---\r\n      duration_ms: 0.2885\r\n      type: \u0027test\u0027\r\n      ...\r\n    # Subtest: allows explicit demo seeding on Vercel\r\n    ok 2 - allows explicit demo seeding on Vercel\r\n      ---\r\n      duration_ms: 0.215\r\n      type: \u0027test\u0027\r\n      ...\r\n    # Subtest: preserves local seeding by default and supports opting out\r\n    ok 3 - preserves local seeding by default and supports opting out\r\n      ---\r\n      duration_ms: 0.0854\r\n      type: \u0027test\u0027\r\n      ...\r\n    1..3\r\nok 3 - demo data seeding\r\n  ---\r\n  duration_ms: 0.8833\r\n  type: \u0027suite\u0027\r\n  ...\r\n1..3\r\n# tests 6\r\n# suites 3\r\n# pass 6\r\n# fail 0\r\n# cancelled 0\r\n# skipped 0\r\n# todo 0\r\n# duration_ms 718.7536\r\n",
-        "durationMs": 1172,
-        "testResults": {
-          "testFramework": "unknown",
-          "runnerDetectedFrom": "none",
-          "testsTotal": 0,
-          "testsPassed": 0,
-          "testsFailed": 0,
-          "testsSkipped": 0,
-          "parseFailed": true
-        }
-      },
-      {
-        "name": "home-route",
-        "kind": "http-probe",
-        "verificationMethod": "http-status",
-        "passed": true,
-        "timedOut": false,
-        "skipped": false,
-        "skippedReason": null,
-        "exitCode": null,
-        "outputSample": "HTTP 200\n\u003C!doctype html\u003E\n\u003Chtml lang=\u0022en\u0022\u003E\n  \u003Chead\u003E\n    \u003Cscript type=\u0022module\u0022\u003Eimport { injectIntoGlobalHook } from \u0022/@react-refresh\u0022;\ninjectIntoGlobalHook(window);\nwindow.$RefreshReg$ = () =\u003E {};\nwindow.$RefreshSig$ = () =\u003E (type) =\u003E type;\u003C/script\u003E\n\n    \u003Cscript type=\u0022module\u0022 src=\u0022/@vite/client\u0022\u003E\u003C/script\u003E\n\n    \u003Cmeta charset=\u0022UTF-8\u0022 /\u003E\n    \u003Cmeta name=\u0022viewport\u0022 content=\u0022width=device-width, initial-scale=1.0\u0022 /\u003E\n    \u003Ctitle\u003E AROGYA VAHINI \u003C/title\u003E\n  \u003C/head\u003E\n  \u003Cbody\u003E\n    \u003Cdiv id=\u0022root\u0022\u003E\u003C/div\u003E\n    \u003Cscript type=\u0022module\u0022 src=\u0022/src/main.tsx\u0022\u003E\u003C/script\u003E\n  \u003C/body\u003E\n\u003C/html\u003E\n\n\n--- server output ---\n\r\n\u003E react-example@0.0.0 dev\r\n\u003E tsx server.ts\r\n\r\n[dotenv@17.3.1] injecting env (2) from .env.local -- tip: \uD83D\uDD10 encrypt with Dotenvx: https://dotenvx.com\r\nServer running on http://localhost:3010\r\n",
-        "durationMs": 2094
-      },
-      {
-        "name": "patient-list-api",
-        "kind": "http-probe",
-        "verificationMethod": "http-status",
-        "passed": true,
-        "timedOut": false,
-        "skipped": false,
-        "skippedReason": null,
-        "exitCode": null,
-        "outputSample": "HTTP 200\n[]\n--- server output ---\n\r\n\u003E react-example@0.0.0 dev\r\n\u003E tsx server.ts\r\n\r\n[dotenv@17.3.1] injecting env (2) from .env.local -- tip: \uD83D\uDEE1\uFE0F auth for agents: https://vestauth.com\r\n",
-        "durationMs": 2073
-      }
-    ],
+    "setupSucceeded": false,
+    "setupDurationMs": 5827,
+    "setupFailureOutput": "setup step 0 \u0027npm\u0027 failed (exit=-4048, timedOut=False)\r\nnpm error code EPERM\r\nnpm error syscall unlink\r\nnpm error path D:\\P.P.K\\project my tube\\Arogya-Vahini-main\\node_modules\\lightningcss-win32-x64-msvc\\lightningcss.win32-x64-msvc.node\r\nnpm error errno -4048\r\nnpm error [Error: EPERM: operation not permitted, unlink \u0027D:\\P.P.K\\project my tube\\Arogya-Vahini-main\\node_modules\\lightningcss-win32-x64-msvc\\lightningcss.win32-x64-msvc.node\u0027] {\r\nnpm error   errno: -4048,\r\nnpm error   code: \u0027EPERM\u0027,\r\nnpm error   syscall: \u0027unlink\u0027,\r\nnpm error   path: \u0027D:\\\\P.P.K\\\\project my tube\\\\Arogya-Vahini-main\\\\node_modules\\\\lightningcss-win32-x64-msvc\\\\lightningcss.win32-x64-msvc.node\u0027\r\nnpm error }\r\nnpm error\r\nnpm error The operation was rejected by your operating system.\r\nnpm error It\u0027s possible that the file was already in use (by a text editor or antivirus), or that you lack permissions to access it.\r\nnpm error\r\nnpm error If you believe this might be a permissions issue, please double-check the permissions of the file and its containing directories, or try running the command again as root/Administrator.\r\nnpm error A complete log of this run can be found in: C:\\Users\\prajw\\AppData\\Local\\npm-cache\\_logs\\2026-11-24T15_55_33_639Z-debug-0.log\r\n",
+    "assertions": [],
     "executions": [
       {
         "source": "setup[0]",
@@ -89,77 +19,6 @@
         ],
         "cwd": "D:\\P.P.K\\project my tube\\Arogya-Vahini-main",
         "env": {},
-        "prependPath": [],
-        "platform": "win32"
-      },
-      {
-        "source": "typescript-check",
-        "resolvedExecutable": "C:\\Program Files\\nodejs\\npm.CMD",
-        "args": [
-          "run",
-          "lint"
-        ],
-        "cwd": "D:\\P.P.K\\project my tube\\Arogya-Vahini-main",
-        "env": {},
-        "prependPath": [],
-        "platform": "win32"
-      },
-      {
-        "source": "production-build",
-        "resolvedExecutable": "C:\\Program Files\\nodejs\\npm.CMD",
-        "args": [
-          "run",
-          "build"
-        ],
-        "cwd": "D:\\P.P.K\\project my tube\\Arogya-Vahini-main",
-        "env": {},
-        "prependPath": [],
-        "platform": "win32"
-      },
-      {
-        "source": "tests-pass",
-        "resolvedExecutable": "C:\\Program Files\\nodejs\\npm.CMD",
-        "args": [
-          "test"
-        ],
-        "cwd": "D:\\P.P.K\\project my tube\\Arogya-Vahini-main",
-        "env": {},
-        "prependPath": [],
-        "platform": "win32"
-      },
-      {
-        "source": "home-route",
-        "resolvedExecutable": "C:\\Program Files\\nodejs\\npm.CMD",
-        "args": [
-          "run",
-          "dev"
-        ],
-        "cwd": "D:\\P.P.K\\project my tube\\Arogya-Vahini-main",
-        "env": {
-          "PORT": "3010",
-          "MONGO_URL": "mongodb://127.0.0.1:27017",
-          "MONGO_DB_NAME": "arogya_vahini_eval",
-          "SEED_DEMO_DATA": "false",
-          "PUBLIC_DEMO_MODE": "false"
-        },
-        "prependPath": [],
-        "platform": "win32"
-      },
-      {
-        "source": "patient-list-api",
-        "resolvedExecutable": "C:\\Program Files\\nodejs\\npm.CMD",
-        "args": [
-          "run",
-          "dev"
-        ],
-        "cwd": "D:\\P.P.K\\project my tube\\Arogya-Vahini-main",
-        "env": {
-          "PORT": "3010",
-          "PUBLIC_DEMO_MODE": "false",
-          "MONGO_URL": "mongodb://127.0.0.1:27017",
-          "MONGO_DB_NAME": "arogya_vahini_eval",
-          "SEED_DEMO_DATA": "false"
-        },
         "prependPath": [],
         "platform": "win32"
       }

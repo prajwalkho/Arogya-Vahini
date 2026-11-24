@@ -35,7 +35,11 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(patient),
     });
-    return res.json();
+    const result = await res.json();
+    if (!res.ok) {
+      throw new Error(typeof result?.error === 'string' ? result.error : 'Unable to register patient.');
+    }
+    return result;
   },
 
   async updatePatient(patientId: string, updates: Partial<Omit<Patient, 'id' | 'created_at'>>): Promise<Patient> {

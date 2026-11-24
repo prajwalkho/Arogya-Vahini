@@ -1,4 +1,5 @@
 import { Collection, Db, MongoClient, ObjectId } from "mongodb";
+import { getMongoDatabaseName } from "./server-config";
 
 export interface PatientDocument {
   id: string;
@@ -56,6 +57,7 @@ export async function connectMongo(): Promise<{ client: MongoClient; database: D
     );
   }
 
+  const databaseName = getMongoDatabaseName(process.env);
   const client = new MongoClient(mongoUrl);
   try {
     await client.connect();
@@ -66,7 +68,7 @@ export async function connectMongo(): Promise<{ client: MongoClient; database: D
     }
     throw error;
   }
-  const database = client.db(process.env.MONGO_DB_NAME ?? "arogya_vahini");
+  const database = client.db(databaseName);
   const collections: MongoCollections = {
     patients: database.collection<PatientDocument>("patients"),
     healthRecords: database.collection<HealthRecordDocument>("health_records"),
