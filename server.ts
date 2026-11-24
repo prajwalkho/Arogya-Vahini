@@ -4,17 +4,20 @@ import path from "path";
 import { v4 as uuidv4 } from "uuid";
 import { connectMongo, withoutMongoId } from "./mongo";
 import { seedDatabase } from "./seed";
+import { isPublicDemoMode, shouldSeedDemoData } from "./server-config";
 
 export async function createApp(includeFrontend = process.env.VERCEL !== "1"): Promise<{ app: express.Express; client: Awaited<ReturnType<typeof connectMongo>>["client"] }> {
   const { client, collections } = await connectMongo();
   const app = express();
-  const publicDemoMode = process.env.PUBLIC_DEMO_MODE === "true" || process.env.VERCEL === "1";
+  const publicDemoMode = isPublicDemoMode(process.env);
 
   app.use(express.json());
 
-  const seeded = await seedDatabase(collections);
-  if (seeded.patients > 0 || seeded.healthRecords > 0) {
-    console.log(`Seeded ${seeded.patients} patients, ${seeded.referrals} referrals, and ${seeded.healthRecords} medical histories.`);
+  if (shouldSeedDemoData(process.env)) {
+    const seeded = await seedDatabase(collections);
+    if (seeded.patients > 0 || seeded.healthRecords > 0) {
+      console.log(`Seeded ${seeded.patients} patients, ${seeded.referrals} referrals, and ${seeded.healthRecords} medical histories.`);
+    }
   }
 
   app.get("/api/patients", async (_req, res) => {

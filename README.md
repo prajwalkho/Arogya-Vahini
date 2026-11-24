@@ -89,6 +89,19 @@ npm run seed
 
 The command creates the MongoDB collections when needed and is safe to run again after the database has been seeded. The MongoDB URL is read from `MONGO_URL` in `.env.local`.
 
+### Deploying privately to Vercel
+
+Vercel sets `VERCEL=1`. By default, this app keeps patient, health-record, and referral APIs private in Vercel deployments. To make the data available to your Vercel team:
+
+1. Enable Vercel Deployment Protection for production and preview deployments, and restrict access to the authorized team.
+2. In Vercel project settings, set `MONGO_URL` and `MONGO_DB_NAME` to the same Atlas cluster and database used for the data you want to display.
+3. Set `VERCEL_PRIVATE_DATA_ACCESS=true` in the same Vercel environments. Do this only after Deployment Protection is active.
+4. Ensure `PUBLIC_DEMO_MODE` is not set to `true`. If this is a demo/test database and you want Vercel to seed demo records, set `SEED_DEMO_DATA=true`; then redeploy.
+
+The private-data flag is an explicit opt-in; without it, Vercel continues to deny private API access. `PUBLIC_DEMO_MODE=true` always keeps private data blocked. Demo seeding is off by default on Vercel and can be explicitly enabled with `SEED_DEMO_DATA=true`. Seeding is additive: it does not delete existing records, and it creates sample health histories only for newly seeded demo patients. Use it only with a demo/test database.
+
+This setup grants access to anyone admitted by the Vercel Deployment Protection policy; it does not provide per-user roles inside the app. Do not use it for a public deployment or expose real patient data publicly.
+
 
 ## 📖 Usage
 

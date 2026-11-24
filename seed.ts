@@ -4,6 +4,16 @@ import { connectMongo, MongoCollections } from "./mongo";
 
 dotenv.config({ path: ".env.local" });
 
+export function selectPatientsNeedingDemoRecords<T extends { id: string }>(
+  patients: T[],
+  patientsWithRecords: ReadonlySet<string>,
+  demoPatientIds: ReadonlySet<string>
+): T[] {
+  return patients.filter((patient) =>
+    demoPatientIds.has(patient.id) && !patientsWithRecords.has(patient.id)
+  );
+}
+
 export async function seedDatabase(collections: MongoCollections): Promise<{ patients: number; referrals: number; healthRecords: number }> {
   const patientCount = await collections.patients.countDocuments();
 
@@ -12,10 +22,12 @@ export async function seedDatabase(collections: MongoCollections): Promise<{ pat
   const patients = [];
   const referrals = [];
   const referralHistory = [];
+  const demoPatientIds = new Set<string>();
 
   if (patientCount < 10) {
     for (let i = 0; i < 850; i += 1) {
       const patientId = uuidv4();
+      demoPatientIds.add(patientId);
       const createdAt = new Date(Date.now() - Math.random() * 1000 * 60 * 60 * 24 * 30);
       patients.push({
         id: patientId,
@@ -54,8 +66,8 @@ export async function seedDatabase(collections: MongoCollections): Promise<{ pat
   }
 
   const allPatients = await collections.patients.find({}, { projection: { id: 1, created_at: 1 } }).toArray();
-  const patientsWithRecords = await collections.healthRecords.distinct("patient_id");
-  const patientsNeedingRecords = allPatients.filter((patient) => !patientsWithRecords.includes(patient.id));
+  const patientsWithRecords = new Set(await collections.healthRecords.distinct("patient_id"));
+  const patientsNeedingRecords = selectPatientsNeedingDemoRecords(allPatients, patientsWithRecords, demoPatientIds);
   const diagnoses = [
     { diagnosis: "Type 2 Diabetes Mellitus", prescription: "Metformin 500 mg twice daily; maintain a low-sugar diet.", reports: "HbA1c: 7.2%; fasting glucose elevated." },
     { diagnosis: "Essential Hypertension", prescription: "Amlodipine 5 mg once daily; monitor blood pressure weekly.", reports: "BP: 152/94 mmHg; ECG normal." },

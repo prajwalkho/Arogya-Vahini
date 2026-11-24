@@ -1,0 +1,75 @@
+{
+  "generatedAt": "2026-11-24T14:55:00Z",
+  "generatedOnPlatform": "win32",
+  "projectType": "webapp",
+  "setup": [
+    {
+      "command": "npm",
+      "args": ["ci"],
+      "timeoutSeconds": 600
+    }
+  ],
+  "assertions": [
+    {
+      "name": "typescript-check",
+      "kind": "process",
+      "command": "npm",
+      "args": ["run", "lint"],
+      "verificationMethod": "exit-code",
+      "expected": "0",
+      "timeoutSeconds": 180
+    },
+    {
+      "name": "production-build",
+      "kind": "process",
+      "command": "npm",
+      "args": ["run", "build"],
+      "verificationMethod": "exit-code",
+      "expected": "0",
+      "timeoutSeconds": 300
+    },
+    {
+      "name": "tests-pass",
+      "kind": "process",
+      "command": "npm",
+      "args": ["test"],
+      "verificationMethod": "test-results",
+      "expected": "0",
+      "timeoutSeconds": 180
+    },
+    {
+      "name": "home-route",
+      "kind": "http-probe",
+      "startCommand": "npm",
+      "startArgs": ["run", "dev"],
+      "url": "http://localhost:3010/",
+      "env": {
+        "PORT": "3010",
+        "MONGO_URL": "mongodb://127.0.0.1:27017",
+        "MONGO_DB_NAME": "arogya_vahini_eval",
+        "SEED_DEMO_DATA": "false",
+        "PUBLIC_DEMO_MODE": "false"
+      },
+      "verificationMethod": "http-status",
+      "expected": "200",
+      "timeoutSeconds": 120
+    },
+    {
+      "name": "patient-list-api",
+      "kind": "http-probe",
+      "startCommand": "npm",
+      "startArgs": ["run", "dev"],
+      "url": "http://localhost:3010/api/patients",
+      "env": {
+        "PORT": "3010",
+        "PUBLIC_DEMO_MODE": "false",
+        "MONGO_URL": "mongodb://127.0.0.1:27017",
+        "MONGO_DB_NAME": "arogya_vahini_eval",
+        "SEED_DEMO_DATA": "false"
+      },
+      "verificationMethod": "http-status",
+      "expected": "200",
+      "timeoutSeconds": 120
+    }
+  ]
+}
